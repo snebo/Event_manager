@@ -3,6 +3,7 @@
 require 'csv'
 require 'google/apis/civicinfo_v2'
 require 'erb'
+require 'date'
 
 def clean_zipcodes(zipcode)
   zipcode.to_s.rjust(5, '0')[0..4]
@@ -43,6 +44,13 @@ def clean_phone_number(number)
   end
 end
 
+def find_most_popular(hrs)
+  puts ''
+  hr_table = hrs.inject(Hash.new(0)) {|h, v| h[v] += 1; h}
+  hr_table = hr_table.sort_by { |_, val| val }.reverse
+  hr_table.each { |k, v| puts("#{k}: #{v} registers")}
+end
+
 template = File.read('form_letter.erb')
 erb_template = ERB.new template
 
@@ -51,16 +59,32 @@ content = CSV.open(
   headers: true,
   header_converters: :symbol
 )
+hours= [] #store the time
+days = []
+day_hash = {0 => "Sunday",
+1 => "Monday", 
+2 => "Tuesday",
+3 => "Wednesday",
+4 => "Thursday",
+5 => "Friday",
+6 => "Saturday"}
+
 content.each do |row|
   id = row[0]
   name = row[:first_name].capitalize
   zips = clean_zipcodes(row[:zipcode])
-  # legislators = legislators_by_zipcode(zips)
+  legislators = legislators_by_zipcode(zips)
 
   phone_number = clean_phone_number(row[:homephone])
-  
   puts "#{name}: #{phone_number}"
 
-  # personal_message = erb_template.result(binding)
-  # save_thank_you_letter(id, personal_message)
+  personal_message = erb_template.result(binding)
+  save_thank_you_letter(id, personal_message)
+
+  hours.push(row[:regdate].split(' ')[1].split(':')[0])
+
+  days.push(day_hash[Date.strptime("#{row[:regdate]}", '%m/%d/%y').wday])
+  
 end
+find_most_popularhours(hours)
+find_most_popular(days)
