@@ -25,6 +25,15 @@ def legislators_by_zipcode(zipcode)
   end
 end
 
+def save_thank_you_letter(id, message)
+  Dir.mkdir('output') unless Dir.exist?('output')
+  filename = "output/thanks_#{id}.html"
+
+  File.open(filename, 'w') do |file|
+    file.puts message
+  end
+end
+
 template = File.read('form_letter.erb')
 erb_template = ERB.new template
 
@@ -40,11 +49,5 @@ content.each do |row|
   legislators = legislators_by_zipcode(zips)
 
   personal_message = erb_template.result(binding)
-
-  Dir.mkdir('output') unless Dir.exist?('output')
-  filename = "output/thanks_#{id}.html"
-
-  File.open(filename, 'w') do |file|
-    file.puts personal_message
-  end
+  save_thank_you_letter(id, personal_message)
 end
