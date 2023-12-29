@@ -34,6 +34,15 @@ def save_thank_you_letter(id, message)
   end
 end
 
+def clean_phone_number(number)
+  number.to_s.gsub!(/[^0-9]/i, '')
+  if number.length != 10
+    number.length == 11 && number.chr == '1' ? number[1..-1] : 'bad number'
+  else
+    number
+  end
+end
+
 template = File.read('form_letter.erb')
 erb_template = ERB.new template
 
@@ -44,10 +53,14 @@ content = CSV.open(
 )
 content.each do |row|
   id = row[0]
-  name = row[:first_name]
+  name = row[:first_name].capitalize
   zips = clean_zipcodes(row[:zipcode])
-  legislators = legislators_by_zipcode(zips)
+  # legislators = legislators_by_zipcode(zips)
 
-  personal_message = erb_template.result(binding)
-  save_thank_you_letter(id, personal_message)
+  phone_number = clean_phone_number(row[:homephone])
+  
+  puts "#{name}: #{phone_number}"
+
+  # personal_message = erb_template.result(binding)
+  # save_thank_you_letter(id, personal_message)
 end
